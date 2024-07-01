@@ -3,7 +3,6 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import chatRoutes from './routes/chatRoutes.js';
 import tekmetricsRoutes from './routes/tekmetricsRoutes.js';
 
 dotenv.config();
@@ -19,7 +18,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(bodyParser.json());
 
-app.use('/api/chat', chatRoutes);
+// Use tekmetricsRoutes
 app.use('/api/tekmetrics', tekmetricsRoutes);
 
 // Add a root route to verify the server is running
