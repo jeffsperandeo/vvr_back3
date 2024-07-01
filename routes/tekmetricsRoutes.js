@@ -46,6 +46,30 @@ const fetchData = async (url, headers) => {
   }
 };
 
+// New route for appointments
+router.get('/appointments', async (req, res) => {
+  const search = req.query.search;
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    return res.status(500).json({ error: 'Failed to obtain access token' });
+  }
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  const appointmentsUrl = `${TEKMETRICS_API_URL}/appointments?shop=${SHOP_ID}&search=${search}`;
+  const appointmentsData = await fetchData(appointmentsUrl, headers);
+
+  if (!appointmentsData) {
+    return res.status(404).json({ error: 'Appointments not found' });
+  }
+
+  res.json(appointmentsData);
+});
+
 router.get('/customer/:customerId', async (req, res) => {
   const customerId = req.params.customerId;
   const accessToken = await getAccessToken();
@@ -69,80 +93,7 @@ router.get('/customer/:customerId', async (req, res) => {
   const repairOrdersUrl = `${TEKMETRICS_API_URL}/repair-orders?shop=${SHOP_ID}&customerId=${customerId}`;
   const repairOrdersData = await fetchData(repairOrdersUrl, headers);
 
-  console.log('Repair Orders Data:', repairOrdersData); // Log the response to verify format
-
-  if (!repairOrdersData) {
-    return res.status(500).json({ error: 'Error fetching repair orders' });
-  }
-
-  return res.json({
-    customer: customerData,
-    repair_orders: repairOrdersData.content,
-  });
-});
-
-// New route to search customer by email
-router.get('/search', async (req, res) => {
-  const email = req.query.email;
-  const accessToken = await getAccessToken();
-
-  if (!accessToken) {
-    return res.status(500).json({ error: 'Failed to obtain access token' });
-  }
-
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-  };
-
-  const searchUrl = `${TEKMETRICS_API_URL}/customers?shop=${SHOP_ID}&search=${email}`;
-  const searchData = await fetchData(searchUrl, headers);
-
-  if (!searchData || !searchData.content || searchData.content.length === 0) {
-    return res.status(404).json({ error: 'Customer not found' });
-  }
-
-  const customerId = searchData.content[0].id;
-
-  const customerUrl = `${TEKMETRICS_API_URL}/customers/${customerId}?shop=${SHOP_ID}`;
-  const customerData = await fetchData(customerUrl, headers);
-
-  const repairOrdersUrl = `${TEKMETRICS_API_URL}/repair-orders?shop=${SHOP_ID}&customerId=${customerId}`;
-  const repairOrdersData = await fetchData(repairOrdersUrl, headers);
-
-  return res.json({
-    customer: customerData,
-    repair_orders: repairOrdersData ? repairOrdersData.content : []
-  });
-});
-
-// New route to fetch appointments by email
-router.get('/appointments', async (req, res) => {
-  const email = req.query.email;
-  const accessToken = await getAccessToken();
-
-  if (!accessToken) {
-    return res.status(500).json({ error: 'Failed to obtain access token' });
-  }
-
-  const headers = {
-    Authorization: `Bearer ${accessToken}`,
-    'Content-Type': 'application/json',
-  };
-
-  const appointmentsUrl = `${TEKMETRICS_API_URL}/appointments?shop=${SHOP_ID}&search=${email}`;
-  const appointmentsData = await fetchData(appointmentsUrl, headers);
-
-  if (!appointmentsData) {
-    return res.status(500).json({ error: 'Error fetching appointments' });
-  }
-
-  // Filter future appointments
-  const futureAppointments = appointmentsData.content.filter(appointment => new Date(appointment.startTime) > new Date());
-
-  return res.json({
-    appointments: futureAppointments
-  });
+  res.json({ customer: customerData, repairOrders: repairOrdersData });
 });
 
 export default router;
