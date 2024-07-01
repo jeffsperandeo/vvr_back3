@@ -116,4 +116,33 @@ router.get('/search', async (req, res) => {
   });
 });
 
+// New route to fetch appointments by email
+router.get('/appointments', async (req, res) => {
+  const email = req.query.email;
+  const accessToken = await getAccessToken();
+
+  if (!accessToken) {
+    return res.status(500).json({ error: 'Failed to obtain access token' });
+  }
+
+  const headers = {
+    Authorization: `Bearer ${accessToken}`,
+    'Content-Type': 'application/json',
+  };
+
+  const appointmentsUrl = `${TEKMETRICS_API_URL}/appointments?shop=${SHOP_ID}&search=${email}`;
+  const appointmentsData = await fetchData(appointmentsUrl, headers);
+
+  if (!appointmentsData) {
+    return res.status(500).json({ error: 'Error fetching appointments' });
+  }
+
+  // Filter future appointments
+  const futureAppointments = appointmentsData.content.filter(appointment => new Date(appointment.startTime) > new Date());
+
+  return res.json({
+    appointments: futureAppointments
+  });
+});
+
 export default router;
